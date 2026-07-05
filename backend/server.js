@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 app.use(clerkMiddleware());
 
-app.use("/api/clerk", clerkWebHook);
+app.post("/api/clerk", clerkWebHook);
 
 app.get("/", (req, res) => {
   return res.send("api is working fine");
