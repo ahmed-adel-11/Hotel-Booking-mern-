@@ -13,7 +13,7 @@ const clerkWebHook = async (req, res) => {
 
     const payload = JSON.stringify(req.body);
 
-    webhook.verify(payload, headers);
+    await webhook.verify(payload, headers);
 
     const { data, type } = req.body;
 
