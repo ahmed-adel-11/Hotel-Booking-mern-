@@ -3,7 +3,7 @@ import { Webhook } from "svix";
 
 const clerkWebHook = async (req, res) => {
   try {
-    const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
+    const webhook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
 
     const headers = {
       "svix-id": req.headers["svix-id"],
@@ -11,37 +11,47 @@ const clerkWebHook = async (req, res) => {
       "svix-signature": req.headers["svix-signature"],
     };
 
-    await whook.verify(JSON.stringify(req.body, headers));
+    const payload = JSON.stringify(req.body);
+
+    webhook.verify(payload, headers);
 
     const { data, type } = req.body;
+
     const userData = {
       _id: data.id,
-      email: data.emailaddresses[0].emailaddress,
-      userName: data.first_name + " " + data.first_name,
+      email: data.email_addresses[0].email_address,
+      userName: `${data.first_name} ${data.last_name ?? ""}`.trim(),
       image: data.image_url,
     };
 
     switch (type) {
-      case "user.created": {
+      case "user.created":
         await User.create(userData);
         break;
-      }
-      case "user.updated": {
+
+      case "user.updated":
         await User.findByIdAndUpdate(data.id, userData);
         break;
-      }
-      case "user.created": {
+
+      case "user.deleted":
         await User.findByIdAndDelete(data.id);
         break;
-      }
+
       default:
         break;
     }
 
-    res.json({ success: true, message: "Webhook Received" });
+    return res.status(200).json({
+      success: true,
+      message: "Webhook received",
+    });
   } catch (error) {
-    console.log(error.message);
-    res.json({ success: false, message: error.message });
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
